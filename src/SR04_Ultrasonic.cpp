@@ -12,31 +12,19 @@ double SR04_Ultrasonic::measureDistance() {
   // This function returns the distance in cm
 
   double distance;
-  unsigned long duration, start, end;
-  bool success = false;
-  while (!success) {
-    this->triggerDistanceMeasurement();
+  unsigned long duration;
 
-    while(digitalRead(this->echoPin) == LOW)
-    { }
-    start = micros();
-    while(digitalRead(this->echoPin) == HIGH)
-    { }
-    end = micros();
+  this->triggerDistanceMeasurement();
 
-    // Use this construct to prevent trouble with 70 minute overflow of micros
-    if (end < start) {
-      delay(10);
-    }
-    else {
-      duration = end - start;
-      success = true;
-    }
+  while(digitalRead(this->echoPin) == LOW) { }
+  duration = micros();
+  while(digitalRead(this->echoPin) == HIGH) { }
 
-  }
+  // Even with the micros() overflow after 70 minutes, there won't be
+  // a problem, as a subtraction of unsigned longs also works across
+  // the overflow.
 
-  //duration = pulseIn(this->echoPin, HIGH);
-  //distance = (duration/2.0) * 29.154 ;
+  duration = micros() - duration;
 
   /* sound travels at 343m/s (at 20°C in air) = 34.3cm/ms = 0.0343cm/µs.
      as the way needs to be traveled twice:
@@ -49,7 +37,7 @@ double SR04_Ultrasonic::measureDistance() {
   distance = duration * 0.01715;
 
   if (distance >= 300 || distance <= 0){
-    return -1;
+    return -1.0;
   }
 
   return distance;
